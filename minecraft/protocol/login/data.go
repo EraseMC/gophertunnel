@@ -258,6 +258,10 @@ type ClientData struct {
 	// This prevents unauthorized clients from connecting using only the host's connection details,
 	// such as its Player Messaging ID (PMID) or IP address.
 	Nonce string `json:",omitempty"`
+	// WaterdogIP is the address of the client as seen by a proxy that logs into the server on its behalf. The
+	// name follows WaterdogPE, which PocketMine-MP forks and plugins already read. A server must only trust it
+	// on connections coming from the proxy.
+	WaterdogIP string `json:"Waterdog_IP,omitempty"`
 }
 
 // PersonaPiece represents a piece of a persona skin. All pieces are sent separately.
