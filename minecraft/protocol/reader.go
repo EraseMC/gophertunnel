@@ -31,7 +31,15 @@ func NewReader(r interface {
 	io.Reader
 	io.ByteReader
 }, shieldID int32, enableLimits bool) *Reader {
-	return &Reader{r: r.(*bytes.Buffer), shieldID: shieldID, limitsEnabled: enableLimits}
+	buf, ok := r.(*bytes.Buffer)
+	if !ok {
+		data, err := io.ReadAll(r)
+		if err != nil {
+			panic(err)
+		}
+		buf = bytes.NewBuffer(data)
+	}
+	return &Reader{r: buf, shieldID: shieldID, limitsEnabled: enableLimits}
 }
 
 // Uint8 reads a uint8 from the underlying buffer.
