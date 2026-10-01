@@ -5,10 +5,17 @@ import (
 	"io"
 )
 
+// lengthReader is a reader that knows how many bytes are left to read, such as a *bytes.Buffer or a
+// *bytes.Reader.
+type lengthReader interface {
+	io.Reader
+	Len() int
+}
+
 // offsetReader is a wrapper around an io.Reader, used to track the offset (amount of bytes read) of the data
 // that is being read, so that errors may have offset data.
 type offsetReader struct {
-	Reader *bytes.Buffer
+	Reader lengthReader
 	off    int64
 	buf    [8]byte
 
@@ -21,7 +28,14 @@ type offsetReader struct {
 // newOffsetReader returns a new offset reader for the io.Reader passed, setting the ReadByte and Next
 // functions as appropriate for that particular reader.
 func newOffsetReader(r io.Reader) *offsetReader {
-	reader := &offsetReader{Reader: r.(*bytes.Buffer)}
+	lr, ok := r.(lengthReader)
+	if !ok {
+		// Length checks need to know what is left, so readers that cannot tell are buffered whole.
+		data, _ := io.ReadAll(r)
+		lr = bytes.NewBuffer(data)
+		r = lr
+	}
+	reader := &offsetReader{Reader: lr}
 	if byteReader, ok := r.(io.ByteReader); ok {
 		reader.ReadByte = func() (byte, error) {
 			b, err := byteReader.ReadByte()
